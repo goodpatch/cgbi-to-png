@@ -53,11 +53,12 @@ defmodule CgbiToPng do
         all_idats = all_idats <> get_all_idat(decompressed, <<>>, width)
         convert_png(rest, png, all_idats, width)
       "IEND" ->
+        bin_list = binary_to_list(all_idats, [])
         z = :zlib.open()
         :zlib.deflateInit(z)
-        compressed_idats = :zlib.deflate(z, all_idats, :finish)
+        compressed_idats = :zlib.deflate(z, bin_list, :finish)
         :zlib.close(z)
-        compressed_idats = Enum.at(compressed_idats, 0)
+        compressed_idats = :erlang.list_to_binary(compressed_idats)
 
         png = png <> <<byte_size(compressed_idats) :: unsigned-integer-size(32)>>
         png = png <> "IDAT"
@@ -98,5 +99,16 @@ defmodule CgbiToPng do
 
   defp convertRGBA(rest, rgba_data, i, width) when i == width do
     {rest, rgba_data}
+  end
+
+  defp binary_to_list(bin, res) do
+    size = byte_size(bin)
+    if size > 4000 do
+      << part :: binary-size(4000), rest :: binary >> = bin
+      res = res ++ [part]
+      binary_to_list(rest, res)
+    else
+      res ++ [bin]
+    end
   end
 end
