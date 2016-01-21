@@ -14,9 +14,13 @@ defmodule CgbiToPng do
 
   def to_png(file) do
     body = case File.read(file) do
-      {:error, reason} -> raise FileExistError
+      {:error, _} -> raise FileExistError
       {:ok, body} -> body
     end
+    to_png_from_data(body)
+  end
+
+  def to_png_from_data(body) do
     << header :: binary-size(8), rest :: binary >> = body
     if to_string(:base64.encode_to_string(header)) != @png_header do
       raise FileFormatError
