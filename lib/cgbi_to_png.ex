@@ -25,8 +25,11 @@ defmodule CgbiToPng do
     if to_string(:base64.encode_to_string(header)) != @png_header do
       raise FileFormatError
     end
-
-    convert_png(rest, header, <<>>, 0)
+    << _ :: unsigned-integer-size(32), first_type :: binary-size(4), _ :: binary >> = rest
+    case first_type do
+      "CgBI" -> convert_png(rest, header, <<>>, 0)
+      _ -> body
+    end
   end
 
   defp convert_png(rest, png, all_idats, width) do
